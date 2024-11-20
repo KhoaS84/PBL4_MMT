@@ -3,9 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/G:/My%20Drive/JAVA/PBL4/src/GAME/NumberGameServer.java</file>
-            <file>file:/G:/My%20Drive/JAVA/PBL4/src/GAME/NumberGameClient.java</file>
-            <file>file:/G:/My%20Drive/JAVA/PBL4/src/GAME/ClientHandler.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/Client_Connection.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/Server_GameNumber.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/GameRoom.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/Handler.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/Client_View.java</file>
         </group>
     </open-files>
 </project-private>

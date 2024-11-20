@@ -1,0 +1,203 @@
+package DEMO;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionListener;
+
+public class NumberGameView {
+    private JFrame frame;
+    private JPanel startPanel;
+    private JPanel waitPanel;
+    private JPanel gamePanel;
+    private JButton startButton;
+    private JButton[] numberButtons = new JButton[100];
+
+    public NumberGameView(ActionListener startListener, ActionListener buttonListener) {
+        frame = new JFrame("Number Finding Game");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(500, 500);
+
+        // Start Panel
+        startPanel = new JPanel(new BorderLayout());
+        JLabel titleLabel = new JLabel("Number Finding Game", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        startButton = new JButton("Start");
+        startButton.addActionListener(startListener);
+        startPanel.add(titleLabel, BorderLayout.CENTER);
+        startPanel.add(startButton, BorderLayout.SOUTH);
+
+        // Wait Panel
+        waitPanel = new JPanel(new BorderLayout());
+        JLabel waitLabel = new JLabel("Waiting for another player...", SwingConstants.CENTER);
+        waitLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        waitPanel.add(waitLabel, BorderLayout.CENTER);
+
+        // Game Panel
+        gamePanel = new JPanel(new GridLayout(10, 10));
+        for (int i = 0; i < 100; i++) {
+            numberButtons[i] = new JButton("");
+            numberButtons[i].addActionListener(buttonListener);
+            gamePanel.add(numberButtons[i]);
+        }
+
+        frame.add(startPanel);
+        frame.setVisible(true);
+    }
+
+    public void showWaitScreen() {
+        frame.getContentPane().removeAll();
+        frame.add(waitPanel);
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    public void showGameScreen() {
+        frame.getContentPane().removeAll();
+        frame.add(gamePanel);
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    public void setButtonText(int index, String text) {
+        numberButtons[index].setText(text);
+    }
+
+    public void disableButton(int number) {
+        for (JButton button : numberButtons) {
+            if (button.getText().equals(String.valueOf(number))) {
+                button.setEnabled(false);
+                break;
+            }
+        }
+    }
+
+    public String getButtonText(int index) {
+        return numberButtons[index].getText();
+    }
+}
+
+
+package DEMO;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+
+public class NumberGameClient {
+    private NumberGameView view;
+    private NumberGameConnection connection;
+
+    public NumberGameClient() {
+        view = new NumberGameView(new StartListener(), new ButtonListener());
+        connection = new NumberGameConnection(this);
+    }
+
+    public void setupButtons(List<Integer> numbers) {
+        for (int i = 0; i < 100; i++) {
+            view.setButtonText(i, String.valueOf(numbers.get(i)));
+        }
+    }
+
+    public void disableNumberButton(int number) {
+        view.disableButton(number);
+    }
+
+    public void showGameScreen() {
+        view.showGameScreen();
+    }
+
+    private class StartListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            view.showWaitScreen();
+            connection.connectToServer();
+        }
+    }
+
+    private class ButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JButton source = (JButton) e.getSource();
+            String text = source.getText();
+            if (!text.isEmpty()) {
+                int selectedNumber = Integer.parseInt(text);
+                connection.sendNumber(selectedNumber);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new NumberGameClient());
+    }
+}
+
+
+package DEMO;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
+public class NumberGameConnection {
+    private static final String SERVER_ADDRESS = "localhost";
+    private static final int SERVER_PORT = 12345;
+
+    private PrintWriter out;
+    private BufferedReader in;
+    private NumberGameClient client;
+
+    public NumberGameConnection(NumberGameClient client) {
+        this.client = client;
+    }
+
+    public void connectToServer() {
+        try {
+            Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            new Thread(() -> {
+                try {
+                    String serverMessage;
+                    while ((serverMessage = in.readLine()) != null) {
+                        if (serverMessage.startsWith("NUMBERS:")) {
+                            String numberString = serverMessage.substring(8);
+                            List<Integer> numbers = parseNumbers(numberString);
+                            client.setupButtons(numbers);
+                            client.showGameScreen();
+                        } else if (serverMessage.contains("selected")) {
+                            int selectedNumber = Integer.parseInt(serverMessage.replaceAll("[^0-9]", ""));
+                            client.disableNumberButton(selectedNumber);
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendNumber(int number) {
+        if (out != null) {
+            out.println(number);
+        }
+    }
+
+    private List<Integer> parseNumbers(String numberString) {
+        numberString = numberString.replaceAll("[\\[\\]]", "");
+        String[] numberArray = numberString.split(", ");
+        List<Integer> numbers = new ArrayList<>();
+        for (String num : numberArray) {
+            numbers.add(Integer.parseInt(num.trim()));
+        }
+        return numbers;
+    }
+}
