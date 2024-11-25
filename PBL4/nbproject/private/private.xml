@@ -3,11 +3,14 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/Client_Connection.java</file>
-            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/Server_GameNumber.java</file>
-            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/GameRoom.java</file>
-            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/Handler.java</file>
-            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/Client_View.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/SERVER/CONTROLLER/WaitingHandler.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/CLIENT/CONTROLLER/Client_GameNumber.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/CLIENT/VIEW/Client_View.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/CLIENT/CONTROLLER/test.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/SERVER/CONTROLLER/ClientHandler.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/SERVER/CONTROLLER/Server_GameNumber.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/CLIENT/CONTROLLER/Client_Connection.java</file>
+            <file>file:/G:/My%20Drive/JAVA/PBL4/src/DEMO/SERVER/MODEL/GameRoom.java</file>
         </group>
     </open-files>
 </project-private>
