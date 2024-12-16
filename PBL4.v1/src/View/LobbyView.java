@@ -69,33 +69,60 @@ public class LobbyView extends JFrame {
         });
         add(joinRoomButton);
 
-        // Nút HISTORY
-        JButton historyButton = new JButton("HISTORY");
-        styleMainButton(historyButton);
-        historyButton.setBounds(300, 420, 200, 40); // Nút dưới JOIN ROOM, kích thước nhỏ hơn
-        historyButton.addActionListener((ActionEvent e) -> {
-            JOptionPane.showMessageDialog(this, "History feature coming soon!", "History", JOptionPane.INFORMATION_MESSAGE);
+        // Nút gamestats
+        JButton buttongamestats = new JButton("GAME STATS");
+        styleMainButton(buttongamestats);
+        buttongamestats.setBounds(300, 420, 200, 40); // Nút dưới JOIN ROOM, kích thước nhỏ hơn
+        buttongamestats.addActionListener((ActionEvent e) -> {
+//            this.setVisible(false); // Ẩn giao diện hiện tại
+            new GameStatsView(clientController, playerName).setVisible(true); // Truyền đúng tham số vào constructor
         });
-        add(historyButton);
+        add(buttongamestats);
+
 
         // Nút HELP
         JButton helpButton = new JButton("HELP");
         styleSideButton(helpButton);
         helpButton.setBounds(50, 500, 80, 30); // Nút góc trái dưới, kích thước nhỏ hơn
         helpButton.addActionListener((ActionEvent e) -> {
-            JOptionPane.showMessageDialog(this, "Help content goes here.", "Help", JOptionPane.INFORMATION_MESSAGE);
+            this.setVisible(false); // Ẩn giao diện hiện tại
+            new HelpView(this).setVisible(true); // Hiển thị giao diện HelpView
         });
+
         add(helpButton);
 
-        // Nút BACK
-        JButton backButton = new JButton("BACK");
-        styleSideButton(backButton);
-        backButton.setBounds(650, 500, 80, 30); // Nút góc phải dưới, kích thước nhỏ hơn
-        backButton.addActionListener((ActionEvent e) -> {
-            new LoginView(clientController).setVisible(true); // Quay lại đăng nhập
-            dispose();
+
+        JButton exitButton = new JButton("LOGOUT");
+        styleSideButton(exitButton);
+        exitButton.setBounds(650, 500, 80, 30); // Vị trí góc phải dưới
+        exitButton.addActionListener((ActionEvent e) -> {
+            // Hiển thị hộp thoại xác nhận
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Are you sure you want to logout?",
+                    "Logout Confirmation",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                // Gửi yêu cầu đăng xuất
+                clientController.sendLogout(playerName);
+                String response = clientController.listen();
+
+                if (response != null && response.startsWith("LOGOUT_SUCCESS")) {
+                    JOptionPane.showMessageDialog(this, "Logged out successfully!", "Logout", JOptionPane.INFORMATION_MESSAGE);
+
+                    // Hiển thị LoginView
+                    new LoginView(clientController).setVisible(true);
+                    dispose(); // Đóng LobbyView
+                } else {
+                    JOptionPane.showMessageDialog(this, "Logout failed: " + response, "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            // Nếu chọn NO, không cần làm gì
         });
-        add(backButton);
+        add(exitButton);
     }
 
     // Hàm định dạng cho các nút chính (PLAY, JOIN ROOM, HISTORY)

@@ -41,9 +41,9 @@ public class GameView extends JFrame {
 
         // Phần bên trái: Bàn cờ
         JPanel boardPanel = new JPanel();
-        boardPanel.setLayout(new GridLayout(10, 10)); // 10x10 bàn cờ
+        boardPanel.setLayout(new GridLayout(7, 7)); // 10x10 bàn cờ
         buttons = new JButton[100];
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 49; i++) {
             buttons[i] = new JButton("");
             buttons[i].setFont(new Font("Arial", Font.BOLD, 12));
             int index = i;  // Tạo một bản sao cục bộ của `i` để sử dụng trong ActionListener
@@ -97,26 +97,28 @@ public class GameView extends JFrame {
         infoPanel.add(Box.createVerticalStrut(10));
         infoPanel.add(timeLabel);
 
-        // Nút EXIT và PAUSE
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 20));
         JButton exitButton = new JButton("EXIT");
-        JButton pauseButton = new JButton("PAUSE");
-
         exitButton.addActionListener(e -> {
-            clientController.sendExitGame(playerName);
-            dispose();
-            new LobbyView(clientController, playerName).setVisible(true);
-            }); // Trả về giao diện Lobby
-        pauseButton.addActionListener(e -> pauseGame()); // Tạm dừng trò chơi
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Bạn có muốn thoát trò chơi không?",
+                    "Xác nhận thoát",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
 
-        exitButton.setForeground(Color.BLUE);
-        pauseButton.setForeground(Color.BLUE);
-        buttonPanel.add(exitButton);
-        buttonPanel.add(pauseButton);
+            if (confirm == JOptionPane.YES_OPTION) {
+                dispose(); // Đóng cửa sổ GameView
+                new LobbyView(clientController, playerName).setVisible(true); // Quay lại giao diện Lobby
+            }
+            // Nếu chọn "Không", không làm gì, hộp thoại sẽ tự đóng
+        });
+        exitButton.setForeground(Color.BLUE);   
+        buttonPanel.add(exitButton);    
         infoPanel.add(Box.createVerticalGlue()); // Đẩy nút xuống cuối
         infoPanel.add(buttonPanel);
-        
         // Log game(khởi tạo JTextArea)
         gameLog = new JTextArea(10, 20);
         gameLog.setEditable(false);
@@ -130,15 +132,11 @@ public class GameView extends JFrame {
             String serverMessage = clientController.listen();
             if (serverMessage == null) continue;
             
-            // Xử lý START_GAME_SUCCESS
             if (serverMessage.startsWith("START_GAME_SUCCESS")) {
                 String boardData = serverMessage.substring(20); // Lấy dữ liệu bàn cờ sau lệnh
                 initializeBoard(boardData); // Khởi tạo bàn cờ
                 appendToLog("Game started with board data received from server.");
-            }
-            
-            //Xử lý MOVE_SUCCESS
-            if (serverMessage.startsWith("MOVE_SUCCESS")) {
+            } else if (serverMessage.startsWith("MOVE_SUCCESS")) {
                 String[] parts = serverMessage.split(" ");
                 String player = parts[1];
                 int number = Integer.parseInt(parts[2]);
@@ -152,10 +150,9 @@ public class GameView extends JFrame {
                         }
                     }
                 });
-            }else if(serverMessage.startsWith("MOVE_FAILURE")){
-                System.out.println("Invalid move: " + serverMessage);
+            } else if (serverMessage.startsWith("MOVE_FAILURE")) {
                 handleInvalidMove(serverMessage); // Xử lý bước đi sai
-            }else if (serverMessage.startsWith("SCORE")) {
+            } else if (serverMessage.startsWith("SCORE")) {
                 String[] parts = serverMessage.split(" ");
                 int player1Score = Integer.parseInt(parts[1]);
                 int player2Score = Integer.parseInt(parts[2]);
@@ -164,19 +161,27 @@ public class GameView extends JFrame {
                     player1ScoreLabel.setText("PLAYER 1: " + player1Score);
                     player2ScoreLabel.setText("PLAYER 2: " + player2Score);
                 });
-            } else if (serverMessage.startsWith("MOVE_FAILURE")) {
-                String[] parts = serverMessage.split(" ", 3);
-                String errorMessage = parts[2];
-                appendToLog("Error: " + errorMessage);
-            }
-            
-            if (serverMessage.startsWith("GAME_STARTED")) {
+            } else if (serverMessage.startsWith("GAME_STARTED")) {
                 String roomId = serverMessage.split(" ")[1];
                 appendToLog("Game started in room " + roomId + "!");
             } else if (serverMessage.startsWith("MOVE")) {
                 updateBoard(serverMessage);
-            } else if (serverMessage.startsWith("SCORE")) {
-                updateScores(serverMessage);
+            } else if (serverMessage.startsWith("EXIT_GAME_SUCCESS")) {
+                appendToLog("You have exited the game. Returning to lobby.");
+                dispose();
+                new LobbyView(clientController, playerName).setVisible(true);
+                break;
+            } else if (serverMessage.startsWith("GAME_OVER")) {
+                String winner = "Other player exited."; // Mặc định thông báo
+                String[] parts = serverMessage.split(" ");
+                if (parts.length > 1) {
+                    winner = parts[1];
+                }
+                appendToLog("Game over! " + winner);
+                JOptionPane.showMessageDialog(this, "Game over! " + winner, "Game Over", JOptionPane.INFORMATION_MESSAGE);
+                dispose();
+                new LobbyView(clientController, playerName).setVisible(true);
+                break;
             } else {
                 appendToLog("Server: " + serverMessage);
             }
@@ -204,7 +209,13 @@ public class GameView extends JFrame {
         String[] parts = moveData.split(" ");
         String player = parts[1];
         System.out.println("Received from server: " + moveData);
-        int number = Integer.parseInt(parts[2]);
+        int number;
+        try {
+            number = Integer.parseInt(parts[2]);
+        } catch (NumberFormatException e) {
+            appendToLog("Invalid move data received: " + moveData);
+            return;
+        }
 
         SwingUtilities.invokeLater(() -> {
             for (int i = 0; i < board.length; i++) {
@@ -257,6 +268,7 @@ public class GameView extends JFrame {
     private void handleInvalidMove(String message) {
         // Hiển thị thông báo cho người chơi
         System.out.println("Invalid move. Try again!");
+        appendToLog("Invalid move. Try again!");
         // Cho phép người chơi nhập lại
     }
 }

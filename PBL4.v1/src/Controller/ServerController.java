@@ -70,7 +70,9 @@ public class ServerController {
             handleGetHistory(request, writer);
         } else if (request.startsWith("MOVE")){
             handleMove(request, writer);
-        }else {
+        } else if (request.startsWith("EXIT_GAME")){
+            handleExitGame(request, writer);
+        } else {
             writer.println("UNKNOWN_COMMAND");
             System.out.println("Unknown command received: " + request);
         }
@@ -159,6 +161,19 @@ public class ServerController {
                 Map<String, Integer> scores = room.getScores();
                 notifyPlayersInRoom(room, "SCORE " + scores.get(room.getPlayers().get(0).getUsername()) +
                         " " + scores.get(room.getPlayers().get(1).getUsername()));
+                
+                if (room.allNumbersSelected()) {
+                String winner = room.determineWinner();
+                if (!"DRAW".equals(winner)) {
+                    notifyPlayersInRoom(room, "GAME_OVER " + winner + " wins!");
+                } else {
+                    notifyPlayersInRoom(room, "GAME_OVER It's a draw!");
+                }
+
+                saveScoresToHistory(room);
+                room.getPlayers().clear();
+                room.setStatus("open");
+            }
             } else {
                 writer.println("MOVE_FAILURE Wrong number");
             }
@@ -202,8 +217,8 @@ public class ServerController {
             if (onlinePlayers.containsKey(username)) {
                 writer.println("LOGIN_FAILURE Already logged in");
             } else {
-                onlinePlayers.put(username, player); // Đánh dấu người chơi online
-                playerWriters.put(username, writer); // Lưu trữ PrintWriter của người chơi
+                onlinePlayers.put(username, player); // Mark player as online
+                playerWriters.put(username, writer); // Store player's PrintWriter
                 writer.println("LOGIN_SUCCESS " + username);
                 System.out.println("User logged in: " + username);
             }
@@ -280,14 +295,22 @@ public class ServerController {
             return;
         }
 
-        Room room = databaseManager.getRoomById(roomId);
+        GameRoom room = findRoomByPlayer(username);
         if (room == null) {
             writer.println("LEAVE_ROOM_FAILURE Room not found");
         } else {
-            writer.println("LEAVE_ROOM_SUCCESS " + room.getRoomName());
-            System.out.println(username + " left room: " + room.getRoomName());
-            room.setStatus("open");
-            databaseManager.updateRoom(room);
+            room.getPlayers().removeIf(player -> player.getUsername().equals(username));
+            writer.println("LEAVE_ROOM_SUCCESS " + room.getRoomId());
+            System.out.println(username + " left room: " + room.getRoomId());
+            if (room.getPlayers().isEmpty()) {
+                room.setStatus("open");
+            } else {
+                // Mark the remaining player as the winner
+                Player remainingPlayer = room.getPlayers().get(0);
+                notifyPlayersInRoom(room, "GAME_OVER " + remainingPlayer.getUsername() + " wins!");
+                room.getPlayers().clear();
+                room.setStatus("open");
+            }
         }
     }
 
@@ -359,9 +382,19 @@ public class ServerController {
         return playerWriters.get(username);
     }
     
-    private GameRoom findRoomByPlayer(String username) {
-        for (GameRoom room : roomController.getAllRooms()) {
-            for (Player player : room.getPlayers()) {
+    private synchronized GameRoom findRoomByPlayer(String username) {
+        List<GameRoom> rooms = roomController.getAllRooms();
+        if (rooms == null) {
+            return null;
+        }
+
+        for (GameRoom room : rooms) {
+            List<Player> players = room.getPlayers();
+            if (players == null) {
+                continue;
+            }
+
+            for (Player player : players) {
                 if (player.getUsername().equals(username)) {
                     return room;
                 }
@@ -369,4 +402,49 @@ public class ServerController {
         }
         return null;
     }
+
+    private void handleExitGame(String request, PrintWriter writer) {
+        String[] parts = request.split(" ");
+        if (parts.length < 2) {
+            writer.println("EXIT_GAME_FAILURE Invalid format");
+            System.out.println("EXIT_GAME_FAILURE: Request format incorrect: " + request);
+            return;
+        }
+        String username = parts[1];
+
+        GameRoom room = findRoomByPlayer(username);
+        if (room == null) {
+            writer.println("EXIT_GAME_FAILURE Room not found");
+            System.out.println("EXIT_GAME_FAILURE: Room not found for user: " + username);
+            return;
+        }
+
+        synchronized (room) {
+            // Loại người chơi ra khỏi phòng
+            room.getPlayers().removeIf(player -> player.getUsername().equals(username));
+            writer.println("EXIT_GAME_SUCCESS");
+            
+            if (!room.getPlayers().isEmpty()) {
+                // Nếu còn lại người chơi khác, thông báo "GAME_OVER"
+                Player remainingPlayer = room.getPlayers().get(0);
+                PrintWriter remainingPlayerWriter = getPlayerWriter(remainingPlayer.getUsername());
+                if (remainingPlayerWriter != null) {
+                    remainingPlayerWriter.println("GAME_OVER");
+                }
+            }
+
+            room.getPlayers().clear();
+            room.setStatus("open");
+            System.out.println("Room cleared and set to open.");
+        }
     }
+    
+    private void saveScoresToHistory(GameRoom room) {
+        Timestamp playTime = new Timestamp(System.currentTimeMillis());
+        for (Player player : room.getPlayers()) {
+            int score = room.getScores().get(player.getUsername());
+            History history = new History(player.getId(), room.getRoomId(), score, playTime);
+            databaseManager.addHistory(history);
+        }
+    }
+}

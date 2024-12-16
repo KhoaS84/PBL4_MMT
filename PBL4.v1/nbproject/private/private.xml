@@ -2,18 +2,6 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/Application/ClientMain.java</file>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/View/LobbyView.java</file>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/Model/GameRoom.java</file>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/View/LoginView.java</file>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/View/GameView.java</file>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/Controller/ServerController.java</file>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/Application/ServerMain.java</file>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/Controller/ClientController.java</file>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/View/RegisterView.java</file>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/Controller/RoomController.java</file>
-            <file>file:/G:/My%20Drive/JAVA/DEMO/src/View/WaitView.java</file>
-        </group>
+        <group/>
     </open-files>
 </project-private>

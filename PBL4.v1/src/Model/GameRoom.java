@@ -25,7 +25,7 @@ public class GameRoom {
         this.players = new ArrayList<>();
         this.numbers = new ArrayList<>();
         this.scores = new HashMap<>();
-        for (int i = 1; i <= 100; i++) {
+        for (int i = 1; i <= 49; i++) {
             numbers.add(i);
         }
         Collections.shuffle(numbers);  // Trộn số ngẫu nhiên
@@ -120,6 +120,30 @@ public class GameRoom {
             System.out.println("Game started in room: " + roomId);
         } else {
             System.out.println("Cannot start game: Room is either already active or not full.");
+        }
+    }
+    
+    public void setStatus(String status){
+        this.isActive = "active".equalsIgnoreCase(status);
+    }
+    
+    public synchronized boolean allNumbersSelected() {
+        return nextNumber > 49;
+    }
+
+    public synchronized String determineWinner() {
+        if (scores.size() < 2) return null;
+        String player1 = players.get(0).getUsername();
+        String player2 = players.get(1).getUsername();
+        int score1 = scores.get(player1);
+        int score2 = scores.get(player2);
+
+        if (score1 > score2) {
+            return player1;
+        } else if (score2 > score1) {
+            return player2;
+        } else {
+            return "DRAW";
         }
     }
 }

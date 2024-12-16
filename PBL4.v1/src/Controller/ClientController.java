@@ -34,6 +34,10 @@ public class ClientController {
         sendMessage("ROOM " + roomName);
     }
 
+    public void sendLeaveRoom(String username, int roomId){
+        sendMessage("LEAVE_ROOM " + username + " " + roomId);
+    }
+    
     public void sendMove(String playerName, int number) {
         sendMessage("MOVE " + playerName + " " + number);
     }
@@ -61,7 +65,7 @@ public class ClientController {
     }
 
     public void sendExitGame(String username){
-        sendMessage("LEAVE_ROOM" + username);
+        sendMessage("EXIT_GAME " + username);
     }
 
     // Đăng xuất
@@ -78,4 +82,6 @@ public class ClientController {
             socket.close();
         }
     }
+    
+    
 }
